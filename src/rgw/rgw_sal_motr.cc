@@ -1007,7 +1007,9 @@ int MotrBucket::list(const DoutPrefixProvider *dpp, ListParams& params, int max,
       rgw_bucket_dir_entry ent;
       auto iter = vals[i].cbegin();
       ent.decode(iter);
-      if (params.list_versions || ent.is_visible())
+
+      // Todo : add sort function here
+      if (params.list_versions || ent.is_visible())  
         results.objs.emplace_back(std::move(ent));
     }
   }
