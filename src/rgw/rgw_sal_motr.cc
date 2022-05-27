@@ -2880,6 +2880,7 @@ int MotrMultipartUpload::init(const DoutPrefixProvider *dpp, optional_yield y,
   std::string oid = mp_obj.get_key();
 
   owner = _owner;
+  ldpp_dout(dpp, 20) << "Inside MotrMultipartUpload " << dendl;
 
   do {
     char buf[33];
@@ -2908,12 +2909,15 @@ int MotrMultipartUpload::init(const DoutPrefixProvider *dpp, optional_yield y,
     // size, etag etc.
     bufferlist bl;
     rgw_bucket_dir_entry ent;
+    MotrObject::Meta meta;
     obj->get_key().get_index_key(&ent.key);
     ent.meta.owner = owner.get_id().to_str();
     ent.meta.category = RGWObjCategory::MultiMeta;
     ent.meta.mtime = ceph::real_clock::now();
     ent.meta.user_data.assign(mpbl.c_str(), mpbl.c_str() + mpbl.length());
     ent.encode(bl);
+    encode(attrs, bl);
+    // meta.encode(bl);
 
     // Insert an entry into bucket multipart index so it is not shown
     // when listing a bucket.
@@ -3054,7 +3058,6 @@ int MotrMultipartUpload::complete(const DoutPrefixProvider *dpp,
   uint64_t min_part_size = cct->_conf->rgw_multipart_min_part_size;
   auto etags_iter = part_etags.begin();
   rgw::sal::Attrs &attrs = target_obj->get_attrs();
-
   do {
     ldpp_dout(dpp, 20) << "MotrMultipartUpload::complete(): list_parts()" << dendl;
     rc = list_parts(dpp, cct, max_parts, marker, &marker, &truncated);
@@ -3202,10 +3205,16 @@ int MotrMultipartUpload::complete(const DoutPrefixProvider *dpp,
   if (rc < 0) {
     return rc == -ENOENT ? -ERR_NO_SUCH_UPLOAD : rc;
   }
+  rgw::sal::Attrs temp_attrs;
+  // MotrObject::Meta meta;
   rgw_bucket_dir_entry ent;
   bufferlist& blr = bl;
   auto ent_iter = blr.cbegin();
   ent.decode(ent_iter);
+  decode(temp_attrs, ent_iter);
+  // meta.decode(ent_iter);
+  attrs[RGW_ATTR_TAGS] = temp_attrs[RGW_ATTR_TAGS];
+  // If we log attrs for tagging details we get expected tagging bl
 
   // Update the dir entry and insert it to the bucket index so
   // the object will be seen when listing the bucket.
