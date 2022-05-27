@@ -2920,12 +2920,15 @@ int MotrMultipartUpload::init(const DoutPrefixProvider *dpp, optional_yield y,
     // size, etag etc.
     bufferlist bl;
     rgw_bucket_dir_entry ent;
+    MotrObject::Meta meta;
     obj->get_key().get_index_key(&ent.key);
     ent.meta.owner = owner.get_id().to_str();
     ent.meta.category = RGWObjCategory::MultiMeta;
     ent.meta.mtime = ceph::real_clock::now();
     ent.meta.user_data.assign(mpbl.c_str(), mpbl.c_str() + mpbl.length());
     ent.encode(bl);
+    encode(attrs, bl);
+    meta.encode(bl);
 
     // Insert an entry into bucket multipart index so it is not shown
     // when listing a bucket.
@@ -3216,10 +3219,13 @@ int MotrMultipartUpload::complete(const DoutPrefixProvider *dpp,
   if (rc < 0) {
     return rc == -ENOENT ? -ERR_NO_SUCH_UPLOAD : rc;
   }
+  rgw::sal::Attrs temp_attrs;
   rgw_bucket_dir_entry ent;
   bufferlist& blr = bl;
   auto ent_iter = blr.cbegin();
   ent.decode(ent_iter);
+  decode(temp_attrs, ent_iter);
+  attrs[RGW_ATTR_TAGS] = temp_attrs[RGW_ATTR_TAGS];
 
   // Update the dir entry and insert it to the bucket index so
   // the object will be seen when listing the bucket.
