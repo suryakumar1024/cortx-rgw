@@ -1466,7 +1466,7 @@ int MotrObject::set_obj_attrs(const DoutPrefixProvider* dpp, RGWObjectCtx* rctx,
 int MotrObject::get_obj_attrs(RGWObjectCtx* rctx, optional_yield y, const DoutPrefixProvider* dpp, rgw_obj* target_obj)
 {
   req_state *s = (req_state *) rctx->get_private();
-  /* handle object tagging */
+  /* handle get object for multipart */
   string req_method = s->info.method;
   ldpp_dout(dpp, 20) << "req_method " << req_method << dendl;
   if (this->category == RGWObjCategory::MultiMeta && req_method != "GET")
