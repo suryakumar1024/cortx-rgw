@@ -1357,8 +1357,8 @@ int MotrObject::set_obj_attrs(const DoutPrefixProvider* dpp, RGWObjectCtx* rctx,
 
 int MotrObject::get_obj_attrs(RGWObjectCtx* rctx, optional_yield y, const DoutPrefixProvider* dpp, rgw_obj* target_obj)
 {
-  if (this->category == RGWObjCategory::MultiMeta)
-   return 0;
+  // if (this->category == RGWObjCategory::MultiMeta)
+  //  return 0;
 
   int rc;
   rgw_bucket_dir_entry ent;
@@ -1554,7 +1554,7 @@ int MotrObject::MotrReadOp::prepare(optional_yield y, const DoutPrefixProvider* 
   string& etag = ent.meta.etag;
   ldpp_dout(dpp, 20) <<__func__<< ": object's etag: " << ent.meta.etag << dendl;
   etag_bl.append(etag.c_str(), etag.size());
-  source->get_attrs().emplace(std::move(RGW_ATTR_ETAG), std::move(etag_bl));
+  // source->get_attrs().emplace(std::move(RGW_ATTR_ETAG), std::move(etag_bl));
 
   source->set_key(ent.key);
   source->set_obj_size(ent.meta.size);
@@ -2497,8 +2497,8 @@ int MotrObject::get_bucket_dir_ent(const DoutPrefixProvider *dpp, rgw_bucket_dir
 
 out:
   if (rc == 0) {
-    sal::Attrs dummy;
-    decode(dummy, iter);
+    // sal::Attrs dummy;
+    decode(attrs, iter);
     meta.decode(iter);
     ldpp_dout(dpp, 20) <<__func__<< ": lid=0x" << std::hex << meta.layout_id << dendl;
 
@@ -3604,7 +3604,15 @@ int MotrMultipartUpload::complete(const DoutPrefixProvider *dpp,
   ent.encode(update_bl);
   encode(attrs, update_bl);
   MotrObject::Meta meta_dummy;
+  rgw::sal::Attrs dummy_attrs;
   meta_dummy.encode(update_bl);
+  rgw_bucket_dir_entry ent_1;
+  bufferlist& blr_1 = update_bl;
+  auto it = blr_1.cbegin();
+  ent_1.decode(it);
+  decode(dummy_attrs, it);
+  for (auto& it : dummy_attrs)
+    ldpp_dout(dpp, 20) << "motr upload complete dummy_attrs it.first " << it.first <<"  "<< it.second << dendl;
 
 
   string bucket_index_iname = "motr.rgw.bucket.index." + tenant_bkt_name;
@@ -3828,7 +3836,8 @@ int MotrMultipartWriter::complete(size_t accounted_size, const std::string& etag
   encode(info, bl);
   encode(attrs, bl);
   part_obj->meta.encode(bl);
-
+  for (auto& it : attrs)
+    ldpp_dout(dpp, 20) << "motr upload writer attrs it.first " << it.first <<"  "<< it.second << dendl;
   string p = "part.";
   char buf[32];
   snprintf(buf, sizeof(buf), "%08d", (int)part_num);
