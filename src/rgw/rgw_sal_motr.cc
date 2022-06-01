@@ -1466,9 +1466,8 @@ int MotrObject::set_obj_attrs(const DoutPrefixProvider* dpp, RGWObjectCtx* rctx,
 int MotrObject::get_obj_attrs(RGWObjectCtx* rctx, optional_yield y, const DoutPrefixProvider* dpp, rgw_obj* target_obj)
 {
   req_state *s = (req_state *) rctx->get_private();
-  /* handle get object for multipart */
   string req_method = s->info.method;
-  ldpp_dout(dpp, 20) << "req_method " << req_method << dendl;
+  /* TODO: Temp fix: Enabled Multipart-GET Obj. and disabled other multipart request methods */
   if (this->category == RGWObjCategory::MultiMeta && req_method != "GET")
    return 0;
 
@@ -3471,7 +3470,7 @@ int MotrMultipartUpload::init(const DoutPrefixProvider *dpp, optional_yield y,
       obj_tags = std::make_unique<RGWObjTags>();
       int ret = obj_tags->set_from_string(tag_str);
       if (ret < 0){
-        ldpp_dout(dpp,0) << "setting obj tags failed with " << ret << dendl;
+        ldpp_dout(dpp,0) << "setting obj tags failed with rc=" << ret << dendl;
         if (ret == -ERR_INVALID_TAG){
           ret = -EINVAL; //s3 returns only -EINVAL for PUT requests
         }
@@ -3480,7 +3479,7 @@ int MotrMultipartUpload::init(const DoutPrefixProvider *dpp, optional_yield y,
     }
     bufferlist tags_1;
     obj_tags->encode(tags_1);
-    attrs[RGW_ATTR_TAGS]=tags_1;
+    attrs[RGW_ATTR_TAGS] = tags_1;
     encode(attrs, bl);
 
     // Insert an entry into bucket multipart index so it is not shown
