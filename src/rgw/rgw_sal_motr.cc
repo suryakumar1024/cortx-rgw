@@ -1468,7 +1468,7 @@ int MotrObject::get_obj_attrs(RGWObjectCtx* rctx, optional_yield y, const DoutPr
   req_state *s = (req_state *) rctx->get_private();
   string req_method = s->info.method;
   /* TODO: Temp fix: Enabled Multipart-GET Obj. and disabled other multipart request methods */
-  if (this->category == RGWObjCategory::MultiMeta && req_method != "GET")
+  if (this->category == RGWObjCategory::MultiMeta && (req_method == "POST" || req_method == "PUT"))
    return 0;
 
   int rc;
