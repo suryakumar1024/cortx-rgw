@@ -3691,8 +3691,10 @@ int MotrMultipartUpload::init(const DoutPrefixProvider *dpp, optional_yield y,
     std::unique_ptr<RGWObjTags> obj_tags;
     req_state *s = (req_state *) obj_ctx->get_private();
     /* handle object tagging */
-    auto tag_str = s->info.env->get("HTTP_X_AMZ_TAGGING");
-    if (tag_str){
+    // Verify tags exists and add to attrs
+    auto tag_str_bool = s->info.env->exists("HTTP_X_AMZ_TAGGING");
+    if (tag_str_bool){
+      auto tag_str = s->info.env->get("HTTP_X_AMZ_TAGGING");
       obj_tags = std::make_unique<RGWObjTags>();
       int ret = obj_tags->set_from_string(tag_str);
       if (ret < 0){
@@ -3702,12 +3704,11 @@ int MotrMultipartUpload::init(const DoutPrefixProvider *dpp, optional_yield y,
         }
         return ret;
       }
+      bufferlist tags_bl;
+      obj_tags->encode(tags_bl);
+      attrs[RGW_ATTR_TAGS] = tags_bl;
     }
-    bufferlist tags_bl;
-    obj_tags->encode(tags_bl);
-    attrs[RGW_ATTR_TAGS] = tags_bl;
     encode(attrs, bl);
-
     // Insert an entry into bucket multipart index so it is not shown
     // when listing a bucket.
     string tenant_bkt_name = get_bucket_name(obj->get_bucket()->get_tenant(), obj->get_bucket()->get_name());
@@ -4025,8 +4026,12 @@ int MotrMultipartUpload::complete(const DoutPrefixProvider *dpp,
   auto ent_iter = blr.cbegin();
   ent.decode(ent_iter);
   decode(temp_attrs, ent_iter);
-  attrs[RGW_ATTR_TAGS] = temp_attrs[RGW_ATTR_TAGS];
 
+  // Add tag to attrs[RGW_ATTR_TAGS] key only if temp_attrs has tagging info
+  if (auto aiter = temp_attrs.find(RGW_ATTR_TAGS);
+      aiter != temp_attrs.end()) {
+    attrs[RGW_ATTR_TAGS] = temp_attrs[RGW_ATTR_TAGS];
+  }
   // Update the dir entry and insert it to the bucket index so
   // the object will be seen when listing the bucket.
   bufferlist update_bl, old_check_bl;
