@@ -3698,8 +3698,7 @@ int MotrMultipartUpload::init(const DoutPrefixProvider *dpp, optional_yield y,
     req_state *s = (req_state *) obj_ctx->get_private();
     /* handle object tagging */
     // Verify tags exists and add to attrs
-    auto tag_str_bool = s->info.env->exists("HTTP_X_AMZ_TAGGING");
-    if (tag_str_bool){
+    if (s->info.env->exists("HTTP_X_AMZ_TAGGING")){
       auto tag_str = s->info.env->get("HTTP_X_AMZ_TAGGING");
       obj_tags = std::make_unique<RGWObjTags>();
       int ret = obj_tags->set_from_string(tag_str);
@@ -4034,8 +4033,7 @@ int MotrMultipartUpload::complete(const DoutPrefixProvider *dpp,
   decode(temp_attrs, ent_iter);
 
   // Add tag to attrs[RGW_ATTR_TAGS] key only if temp_attrs has tagging info
-  if (auto aiter = temp_attrs.find(RGW_ATTR_TAGS);
-      aiter != temp_attrs.end()) {
+  if (temp_attrs.find(RGW_ATTR_TAGS) != temp_attrs.end()) {
     attrs[RGW_ATTR_TAGS] = temp_attrs[RGW_ATTR_TAGS];
   }
   // Update the dir entry and insert it to the bucket index so
