@@ -3690,7 +3690,7 @@ int MotrMultipartUpload::init(const DoutPrefixProvider *dpp, optional_yield y,
       obj_tags = std::make_unique<RGWObjTags>();
       int ret = obj_tags->set_from_string(tag_str);
       if (ret < 0){
-        ldpp_dout(dpp,0) << "setting obj tags failed with rc=" << ret << dendl;
+        ldpp_dout(dpp, 0) << "setting obj tags failed with rc=" << ret << dendl;
         if (ret == -ERR_INVALID_TAG){
           ret = -EINVAL; //s3 returns only -EINVAL for PUT requests
         }
